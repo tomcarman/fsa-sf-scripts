@@ -12,7 +12,7 @@ from pymongo.errors import BulkWriteError
 HEADERS = {'x-api-version': '2'}
 
 REFRESH_FILES = False
-INPUT_FILE = 'input/input_full.csv'
+INPUT_FILE = 'input/input.csv'
 OUTPUT_FILE = 'input/output.csv'
 FILE_DIRECTORY = 'files'
 
@@ -182,7 +182,7 @@ def processRestaurants():
 			row_number = row_number+1
 
 			name = row[1]
-			postcode = row[5].upper()
+			postcode = row[5].upper().replace(' ', '')
 
 			print(f'{row_number} - Processing {name} - {postcode}')
 
@@ -208,8 +208,15 @@ def processRestaurants():
 			for doc in table.find( query ):
 				results.append(doc)
 
-			if len(results) == 1:
 
+			if len(results) == 0:
+				row.append('No match')
+
+			elif len(results) > 1:
+				row.append('Multiple matches')
+
+			elif len(results) == 1:
+				row.append('Single match')
 				row.append(doc['rating'])
 				row.append(doc['ratingdate'])
 				row.append(doc['_id'])
@@ -221,6 +228,7 @@ def processRestaurants():
 		print('Writing results to output.csv...')
 
 		csv_writer = csv.writer(csv_outfile)
+		csv_writer.writerow(['Id', 'Restaurant', 'Street 1', 'Street 2', 'City', 'Postcode', 'CreatedDate', 'Match', 'Hygiene Rating', 'Rating Date', 'FSA ID'])
 		csv_writer.writerows(all_results)
 
 
@@ -242,7 +250,7 @@ class Establishment:
 		if hasattr(obj, 'AddressLine4'):
 			self.address4 = obj.AddressLine4.cdata
 		if hasattr(obj, 'PostCode'):
-			self.postcode = obj.PostCode.cdata
+			self.postcode = obj.PostCode.cdata.replace(' ', '')
 
 
 run()	
